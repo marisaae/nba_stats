@@ -4,13 +4,16 @@ import time
 import random
 from db.connection import get_connection
 from fetch_api.nba_fetch import fetch_all_teams, fetch_team_info, fetch_team_roster, fetch_team_schedule, fetch_player_game_logs, fetch_team_def_stats, fetch_player_headshot
+from fetch_api.nba_headers_patch import patch_nba_api_headers
 from fetch_api.odds_fetch import fetch_odds
+
 from utils.fetch_utils import cleanup_old_headshots
 
 
 def run_all():
     today = date.today()
     all_teams = fetch_all_teams()
+    patch_nba_api_headers()
 
     lal_team_abbrev = "LAL"
     lal_team_id = all_teams.loc[all_teams['abbreviation'] == lal_team_abbrev, 'id'].iloc[0]
