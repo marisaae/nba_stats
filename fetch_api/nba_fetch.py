@@ -33,7 +33,7 @@ def fetch_player_headshot(player_id):
 
 # Fetch team info
 def fetch_team_info(team_id, cur):
-    team_info = teaminfocommon.TeamInfoCommon(team_id=team_id)
+    team_info = teaminfocommon.TeamInfoCommon(team_id=team_id, timeout=60)
     team_df = team_info.get_data_frames()[0]
 
     if team_df.empty:

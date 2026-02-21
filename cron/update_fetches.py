@@ -23,7 +23,7 @@ def run_all():
             for _, row in all_teams.iterrows():
                 team_id = row['id']
                 fetch_team_info(team_id, cur)
-                time.sleep(random.uniform(0.8, 1.5))
+                time.sleep(random.uniform(2.5, 4.0))
             roster_df = fetch_team_roster(lal_team_id, cur)
             fetch_team_schedule(lal_team_id, "2025-26", cur)
             fetch_team_def_stats('F', '2025-26', cur)
