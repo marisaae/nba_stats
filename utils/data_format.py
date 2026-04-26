@@ -23,7 +23,7 @@ def format_schedule(df, team_id, team_name="Lakers"):
     df["Result"] = df.apply(
         lambda row: (
             "—"
-            if row["game_status"] != "Final"
+            if row["game_status"] != "Final" and row["game_status"] != "Final/OT"
             else (
                 "W"
                 if (
