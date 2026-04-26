@@ -1,0 +1,15 @@
+SELECT * FROM schedule ORDER BY game_date;
+SELECT * FROM roster;
+SELECT * FROM player_game_log ORDER BY game_date;
+SELECT * FROM game_odds_raw;
+SELECT * FROM player_odds_raw;
+SELECT * FROM player_odds_pivot;
+SELECT * FROM game_odds_pivot;
+SELECT * FROM player_prop_results ORDER BY game_date;
+SELECT * FROM game_props_results ORDER BY game_date;
+SELECT * FROM team_def_stats ORDER BY season, team_name, opp_player_position;
+SELECT * FROM team_info ORDER BY abbreviation;
+SELECT * FROM future_games;
+SELECT * FROM rolling_stats;
+SELECT * FROM model_player_stats;
+SELECT * FROM front_end_props;
