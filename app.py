@@ -68,6 +68,7 @@ team_df = load_team_info(lal_team_id)
 standing = team_df["standing"].iloc[0].astype(str)
 record = team_df["record"].iloc[0]
 
+st.header("The LA Lakers were eliminated in Game 4 of the Western Conference Semifinals by OKC Thunder. See you next season!", divider="violet")
 col1, col2 = st.columns([.5, 3])
 with col1:
     img_path = Path("misc_imgs") / "lakers_logo.png"
