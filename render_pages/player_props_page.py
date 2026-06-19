@@ -208,8 +208,9 @@ def render_player_props_page(all_props_df, roster_df, player_id, prop_market, ev
 
     player = roster_df.loc[roster_df['player_id'] == player_id].iloc[0]
     image_path = Path("player_headshots") / f"{player_id}.png"
-
-    st.subheader(f"{market} prop for next game on {game_date} at {game_time}", anchor="top")
+# updated for last game
+    st.subheader(f"{market} prop for next game on {game_date}", anchor="top")
+    # st.subheader(f"{market} prop for next game on {game_date} at {game_time}", anchor="top")
     col1, col2, col3, col4, col5, col6, col7 = st.columns([1.5, 1, 1, 1, 1, 1, 1])
     with col1:
         st.image(image_path, width='content') 
