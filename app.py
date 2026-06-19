@@ -146,23 +146,43 @@ with t4:
 #   "home_team_name": "Lakers",
 #   "away_team_name": "Heat"
 # }
+# update for last game of the season to show props
+    last_game = {
+        "event_id": "29fe17f5b19da82ce2957c3683a10aa7",
+        "game_date": date(2026,4,9),
+        "game_status": "Final",
+        "home_team_id": 1610612744,
+        "away_team_id": 1610612747,
+        "home_team_name": "Warriors",
+        "away_team_name": "Lakers"
+    }
 
-    if next_game is None:
-        st.info("No upcoming games scheduled.")
-        st.stop()
+    # if next_game is None:
+    #     st.info("No upcoming games scheduled.")
+    #     st.stop()
 
-    event_id = next_game["event_id"]
+    # event_id = next_game["event_id"]
+    event_id = last_game["event_id"]
+
     st.session_state.props_event_id = event_id
-    next_game_date = pd.to_datetime(next_game["game_date"]).strftime("%m/%d/%Y")
-    next_game_time = next_game["game_status"]
+    last_game_date = pd.to_datetime(last_game["game_date"]).strftime("%m/%d/%Y")
+    last_game_time = last_game["game_status"]
+    # next_game_date = pd.to_datetime(next_game["game_date"]).strftime("%m/%d/%Y")
+    # next_game_time = next_game["game_status"]
     all_props = load_all_player_props(event_id)
 
     if st.session_state.props_view == "list":
         if all_props.empty:
-            st.info(f"No props available yet for the next game on {next_game_date} at {next_game_time}.")
+            st.info(f"No props available yet for the last available game on {last_game_date}.")
         else:
-            st.header(f"Props for next game on {next_game_date} at {next_game_time}")
+            st.header(f"Props for the last available game on {last_game_date}")
             render_all_props_page(all_props)
+    # if st.session_state.props_view == "list":
+    #     if all_props.empty:
+    #         st.info(f"No props available yet for the next game on {next_game_date} at {next_game_time}.")
+    #     else:
+    #         st.header(f"Props for next game on {next_game_date} at {next_game_time}")
+    #         render_all_props_page(all_props)
 
     elif st.session_state.props_view == "player":
         render_player_props_page(all_props, roster_df,

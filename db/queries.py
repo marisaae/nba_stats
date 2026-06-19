@@ -89,6 +89,41 @@ def get_player_stats(player_id, curr_season):
     """
     return pd.read_sql(query, engine, params=(player_id, curr_season))
 
+# added to get last game stats for player props page
+def get_player_last_stats(player_id, curr_season):
+    query = """
+    SELECT player_id,
+           season,
+           game_date,
+           matchup,
+           wl,
+           min,
+           pts,
+           fgm,
+           fga,
+           fg_pct,
+           three_pts_made,
+           three_pts_att,
+           three_pts_pct,
+           ftm,
+           fta,
+           ft_pct,
+           oreb,
+           dreb,
+           tot_reb,
+           ast,
+           stl,
+           blk,
+           turnover,
+           fouls,
+           pts_reb_ast
+        FROM player_game_log
+        WHERE player_id = %s AND season = %s AND game_date < ('2026-04-09'::date)
+        ORDER BY game_date DESC;
+    """
+    return pd.read_sql(query, engine, params=(player_id, curr_season))
+
+
 def get_player_props(player_id, event_id, market):
     query="""
     SELECT *
@@ -96,6 +131,7 @@ def get_player_props(player_id, event_id, market):
     WHERE player_id = %s AND event_id = %s AND market = %s;
     """
     return pd.read_sql(query, engine, params=(player_id, event_id, market))
+
 
 def get_all_player_props(event_id):
     query="""
@@ -147,6 +183,17 @@ def get_player_next_predictions(player_id):
     AND player_id = %s
     ORDER BY game_date
     LIMIT 1;
+    """
+
+    return pd.read_sql(query, engine, params=(player_id,))
+
+# added to get last predictions for player props page
+def get_player_last_predictions(player_id):
+    query = """
+    SELECT *
+    FROM player_prediction_log
+    WHERE game_id = 22501170
+    AND player_id = %s;
     """
 
     return pd.read_sql(query, engine, params=(player_id,))

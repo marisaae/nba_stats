@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 import pandas as pd
-from utils.data_load import load_player_stats
+from utils.data_load import load_player_stats, load_last_player_stats
 from utils.market_mappings import MARKET_TO_LAST_5
 
 def get_last_5_stat(market, player_stats):
@@ -13,8 +13,10 @@ def get_last_5_stat(market, player_stats):
         columns={col_name: market}
     )
 
+#updated to get last player stats for player props page
 def render_prop_chart(player_id, prop_line, market, prediction):
-    last_5_stats = load_player_stats(player_id, "2025-26").head(5)
+    last_5_stats = load_last_player_stats(player_id, "2025-26").head(5)
+    # last_5_stats = load_player_stats(player_id, "2025-26").head(5)
     last_5_market_stats = get_last_5_stat(market, last_5_stats)
 
     max = last_5_market_stats[market].max()

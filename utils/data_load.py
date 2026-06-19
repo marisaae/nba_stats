@@ -1,4 +1,4 @@
-from db.queries import get_team_info, get_team_schedule, get_team_roster, get_player_stats, get_all_player_props, get_player_props, get_rolling_avg_stats, get_player_next_predictions
+from db.queries import get_team_info, get_team_schedule, get_team_roster, get_player_stats, get_all_player_props, get_player_props, get_rolling_avg_stats, get_player_next_predictions, get_player_last_predictions, get_player_last_stats
 from utils.data_format import format_predictions
 from utils.market_mappings import MARKET_TO_PRED_COL
 import pandas as pd
@@ -15,6 +15,12 @@ def load_team_roster(team_id):
 
 def load_player_stats(player_id, curr_season):
     df = get_player_stats(player_id, curr_season)
+    df['game_date'] = pd.to_datetime(df['game_date']).dt.strftime("%m/%d/%Y")
+    return df
+
+# added to load last stats for player props page
+def load_last_player_stats(player_id, curr_season):
+    df = get_player_last_stats(player_id, curr_season)
     df['game_date'] = pd.to_datetime(df['game_date']).dt.strftime("%m/%d/%Y")
     return df
 
@@ -41,8 +47,10 @@ def load_rolling_avg_stats(player_id):
     return df
 
 
+# updated to load last predictions for player props page
 def load_player_prediction(player_id, market):
-    df = get_player_next_predictions(player_id)
+    # df = get_player_next_predictions(player_id)
+    df = get_player_last_predictions(player_id)
     df = format_predictions(df)
     col_name = MARKET_TO_PRED_COL.get(market)
 
