@@ -90,8 +90,8 @@ def render_pts_trend_chart(player_stats_df, player_id):
     avg_points = calc_ppg(player_data)
     
     game_count, mid = calc_mid(player_data)
-    first_half = player_data.iloc[:mid]
-    second_half = player_data.iloc[mid:]
+    first_half = player_data.iloc[mid:]
+    second_half = player_data.iloc[:mid]
 
     avg_first_half = round(first_half["pts"].mean(), 1)
     avg_second_half = round(second_half["pts"].mean(), 1)

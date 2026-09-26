@@ -13,8 +13,8 @@ def render_shooting_trend_chart(player_stats_df, player_id):
     avg_fg_pct = calc_fgpct(player_data) / 100
 
     game_count, mid = calc_mid(player_data)
-    first_half = player_data.iloc[:mid]
-    second_half = player_data.iloc[mid:]
+    first_half = player_data.iloc[mid:]
+    second_half = player_data.iloc[:mid]
 
     avg_fg_pct_first_half = calc_fgpct(first_half) / 100
     avg_fg_pct_second_half = calc_fgpct(second_half) / 100
