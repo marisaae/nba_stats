@@ -65,8 +65,8 @@ def fetch_team_info(team_id, cur):
     cur.execute(query, (team_id, team_curr_season, team_name, team_abbreviation, team_city, team_conference, team_record, team_wins, team_losses, team_conf_rank))
 
  # Fetch team roster
-def fetch_team_roster(team_id, cur):
-    roster = commonteamroster.CommonTeamRoster(team_id=team_id)
+def fetch_team_roster(team_id, season, cur):
+    roster = commonteamroster.CommonTeamRoster(team_id=team_id, season=season)
     roster_df = roster.get_data_frames()[0]
 
     rows_to_insert = []
@@ -85,14 +85,16 @@ def fetch_team_roster(team_id, cur):
             feet, inches = raw_height.split("-")
             height = f"{feet}'{inches}\""
             weight = row['WEIGHT'] + " lbs"
-            rows_to_insert.append((team_id, player_id, full_name, first_name, last_name, age, number, position, height, weight))
+            season = row['SEASON']
+            rows_to_insert.append((team_id, player_id, full_name, first_name, last_name, age, number, position, height, weight, season))
     else:
         print("No team roster data found.")
 
     query = """
-                INSERT INTO roster (team_id, player_id, full_name, first_name, last_name, age, number, position, height, weight)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                ON CONFLICT (player_id) DO UPDATE SET
+                INSERT INTO roster (team_id, player_id, full_name, first_name, last_name, age, number, position, height, weight, season)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (player_id, season) DO UPDATE SET
+                    team_id = EXCLUDED.team_id,
                     age = EXCLUDED.age,
                     number = EXCLUDED.number,
                     position = EXCLUDED.position,
@@ -104,9 +106,11 @@ def fetch_team_roster(team_id, cur):
     placeholders = ','.join(['%s'] * len(current_player_ids))
     delete_query = f"""
         DELETE FROM roster
-        WHERE player_id NOT IN ({placeholders});
+        WHERE season = %s
+        AND team_id = %s
+        AND player_id NOT IN ({placeholders});
     """
-    cur.execute(delete_query, current_player_ids)
+    cur.execute(delete_query, [season,team_id] + current_player_ids)
 
     return roster_df
 

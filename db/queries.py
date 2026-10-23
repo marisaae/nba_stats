@@ -22,7 +22,7 @@ def get_team_info(team_id):
     """
     return pd.read_sql(query, engine, params=(team_id,))
 
-def get_team_schedule(team_id):
+def get_team_schedule(team_id, season):
     query = """
     SELECT  game_label,
             season_year, 
@@ -36,12 +36,12 @@ def get_team_schedule(team_id):
             away_team_score, 
             arena_name
         FROM schedule
-        WHERE home_team_id = %s OR away_team_id = %s
+        WHERE season_year = %s AND (home_team_id = %s OR away_team_id = %s)
         ORDER BY game_date ASC;
     """
-    return pd.read_sql(query, engine, params=(team_id, team_id))
+    return pd.read_sql(query, engine, params=(season, team_id, team_id))
 
-def get_team_roster(team_id):
+def get_team_roster(team_id, season):
     query = """
     SELECT player_id,
            full_name,
@@ -51,10 +51,10 @@ def get_team_roster(team_id):
            height,
            weight
         FROM roster
-        WHERE team_id = %s
+        WHERE team_id = %s AND season = %s
         ORDER BY full_name ASC;
     """
-    return pd.read_sql(query, engine, params=(team_id,))
+    return pd.read_sql(query, engine, params=(team_id, season))
 
 def get_player_stats(player_id, curr_season):
     query = """
@@ -91,37 +91,71 @@ def get_player_stats(player_id, curr_season):
 
 # added to get last game stats for player props page
 def get_player_last_stats(player_id, curr_season):
-    query = """
-    SELECT player_id,
-           season,
-           game_date,
-           matchup,
-           wl,
-           min,
-           pts,
-           fgm,
-           fga,
-           fg_pct,
-           three_pts_made,
-           three_pts_att,
-           three_pts_pct,
-           ftm,
-           fta,
-           ft_pct,
-           oreb,
-           dreb,
-           tot_reb,
-           ast,
-           stl,
-           blk,
-           turnover,
-           fouls,
-           pts_reb_ast
-        FROM player_game_log
-        WHERE player_id = %s AND season = %s AND game_date < ('2026-04-09'::date)
-        ORDER BY game_date DESC;
-    """
-    return pd.read_sql(query, engine, params=(player_id, curr_season))
+    if curr_season == "2025-26":
+        query = """
+        SELECT player_id,
+            season,
+            game_date,
+            matchup,
+            wl,
+            min,
+            pts,
+            fgm,
+            fga,
+            fg_pct,
+            three_pts_made,
+            three_pts_att,
+            three_pts_pct,
+            ftm,
+            fta,
+            ft_pct,
+            oreb,
+            dreb,
+            tot_reb,
+            ast,
+            stl,
+            blk,
+            turnover,
+            fouls,
+            pts_reb_ast
+            FROM player_game_log
+            WHERE player_id = %s AND season = %s AND game_date < ('2026-04-09'::date)
+            ORDER BY game_date DESC;
+        """
+        params=(player_id, curr_season)
+    else:
+        query = """
+        SELECT player_id,
+            season,
+            game_date,
+            matchup,
+            wl,
+            min,
+            pts,
+            fgm,
+            fga,
+            fg_pct,
+            three_pts_made,
+            three_pts_att,
+            three_pts_pct,
+            ftm,
+            fta,
+            ft_pct,
+            oreb,
+            dreb,
+            tot_reb,
+            ast,
+            stl,
+            blk,
+            turnover,
+            fouls,
+            pts_reb_ast
+            FROM player_game_log
+            WHERE player_id = %s
+            ORDER BY game_date DESC;
+        """
+        params = (player_id,)
+    return pd.read_sql(query, engine, params=params)
 
 
 def get_player_props(player_id, event_id, market):
@@ -141,11 +175,12 @@ def get_all_player_props(event_id):
     """
     return pd.read_sql(query, engine, params=(event_id,))
 
-def get_next_game(team_id):
+def get_next_game(team_id, season):
     query="""
     SELECT *
     FROM schedule
     WHERE (home_team_id = %s OR away_team_id = %s)
+    AND season_year = %s
     AND game_date >= (
     CURRENT_DATE AT TIME ZONE 'America/New_York'
     )::date
@@ -154,7 +189,7 @@ def get_next_game(team_id):
     LIMIT 1;
     """
     
-    df = pd.read_sql(query, engine, params=(team_id, team_id))
+    df = pd.read_sql(query, engine, params=(team_id, team_id, season))
 
     if df.empty:
         return None

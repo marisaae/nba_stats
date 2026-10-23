@@ -1,9 +1,14 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from utils.calculations import calc_apg
+import streamlit as st
 
 # assists per game and assists home vs away
 def render_playmaking_chart(player_stats_df, player_id):
+    if player_stats_df.empty:
+        st.info("No stats available for this player yet.")
+        return None
+
     player_data = player_stats_df[player_stats_df["player_id"] == player_id].head(10)
     avg_ast = calc_apg(player_data)
     min_ast = player_data["ast"].min()

@@ -8,7 +8,7 @@ from fetch_api.odds_fetch import fetch_odds
 from utils.fetch_utils import cleanup_old_headshots
 
 
-def run_all():
+def run_all(season="2026-27"):
     today = date.today()
     all_teams = fetch_all_teams()
 
@@ -21,13 +21,13 @@ def run_all():
                 team_id = row['id']
                 fetch_team_info(team_id, cur)
                 time.sleep(random.uniform(0.8, 1.5))
-            roster_df = fetch_team_roster(lal_team_id, cur)
-            fetch_team_schedule(lal_team_id, "2025-26", cur)
-            fetch_team_def_stats('F', '2025-26', cur)
-            fetch_team_def_stats('C', '2025-26', cur)
-            fetch_team_def_stats('G', '2025-26', cur)
+            roster_df = fetch_team_roster(lal_team_id, season, cur)
+            fetch_team_schedule(lal_team_id, season, cur)
+            fetch_team_def_stats('F', season, cur)
+            fetch_team_def_stats('C', season, cur)
+            fetch_team_def_stats('G', season, cur)
             for _, row in roster_df.iterrows():
-                fetch_player_game_logs(row['PLAYER_ID'], '2025-26', cur)
+                fetch_player_game_logs(row['PLAYER_ID'], season, cur)
 
     for _, row in roster_df.iterrows():
         player_id = row["PLAYER_ID"]
@@ -39,8 +39,8 @@ def run_all():
 
         fetch_player_headshot(player_id)
     
-    current_player_ids = roster_df['PLAYER_ID'].tolist()
-    cleanup_old_headshots(current_player_ids)
+    # current_player_ids = roster_df['PLAYER_ID'].tolist()
+    # cleanup_old_headshots(current_player_ids)
 
     fetch_odds(roster_df)
 

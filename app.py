@@ -68,7 +68,16 @@ team_df = load_team_info(lal_team_id)
 standing = team_df["standing"].iloc[0].astype(str)
 record = team_df["record"].iloc[0]
 
-st.header("The LA Lakers were eliminated in Game 4 of the Western Conference Semifinals by OKC Thunder. See you next season!", divider="violet")
+col1, col2 = st.columns([.5, 3])
+with col1:
+
+    selected_season = st.selectbox(
+        "Select Season",
+        ["2026-27", "2025-26"],
+        key="selected_season"
+    )
+    roster_season = selected_season[:4]
+
 col1, col2 = st.columns([.5, 3])
 with col1:
     img_path = Path("misc_imgs") / "lakers_logo.png"
@@ -80,11 +89,11 @@ with col2:
     st.write(f"Record: **{record}**")
 
 
-schedule_df = load_team_schedule(lal_team_id)
+schedule_df = load_team_schedule(lal_team_id, selected_season)
 schedule_df = format_schedule(schedule_df, lal_team_id, "Lakers")
 styled_schedule_df = schedule_df.style.apply(highlight_lakers_score, axis=1).apply(highlight_preseason, axis=1)
 
-roster_df = load_team_roster(lal_team_id)
+roster_df = load_team_roster(lal_team_id, roster_season)
 
 
 t1, t2, t3, t4 = st.tabs(["Schedule", "Roster", "Player Stats", "Player Props"])
@@ -133,60 +142,51 @@ with t3:
         render_player_list(roster_df)
 
     elif st.session_state.stats_view == "player":
-        render_player_page(roster_df, st.session_state.selected_player_id)
+        selected_player_id = st.session_state.selected_player_id
+
+        if selected_player_id not in roster_df["player_id"].values:
+            st.warning("This player was not on the Lakers' roster during the selected season.")
+        else:
+            render_player_page(roster_df, selected_player_id, selected_season)
 
 with t4:
-    next_game = get_next_game(lal_team_id)
-#     next_game = {
-#   "event_id": "12a69f98068c9e1b277528c3f7dfed72",
-#   "game_date": date(2025, 12, 30),
-#   "game_status": "10:00am EST",
-#   "home_team_id": 1610612747,
-#   "away_team_id": 1610612745,
-#   "home_team_name": "Lakers",
-#   "away_team_name": "Heat"
-# }
-# update for last game of the season to show props
-    last_game = {
-        "event_id": "29fe17f5b19da82ce2957c3683a10aa7",
-        "game_date": date(2026,4,9),
-        "game_status": "Final",
-        "home_team_id": 1610612744,
-        "away_team_id": 1610612747,
-        "home_team_name": "Warriors",
-        "away_team_name": "Lakers"
-    }
+    if selected_season == "2025-26":
+        props_game = {
+            "event_id": "29fe17f5b19da82ce2957c3683a10aa7",
+                "game_date": date(2026,4,9),
+                "game_status": "Final"
+        }
 
-    # if next_game is None:
-    #     st.info("No upcoming games scheduled.")
-    #     st.stop()
+    else:
+        props_game = get_next_game(lal_team_id, selected_season)
 
-    # event_id = next_game["event_id"]
-    event_id = last_game["event_id"]
+    if props_game is None:
+        st.info("No upcoming games scheduled.")
+        st.stop()
 
-    st.session_state.props_event_id = event_id
-    last_game_date = pd.to_datetime(last_game["game_date"]).strftime("%m/%d/%Y")
-    last_game_time = last_game["game_status"]
-    # next_game_date = pd.to_datetime(next_game["game_date"]).strftime("%m/%d/%Y")
-    # next_game_time = next_game["game_status"]
-    all_props = load_all_player_props(event_id)
+    else:
+        event_id = props_game["event_id"]
 
-    if st.session_state.props_view == "list":
-        if all_props.empty:
-            st.info(f"No props available yet for the last available game on {last_game_date}.")
-        else:
-            st.header(f"Props for the last available game on {last_game_date}")
-            render_all_props_page(all_props)
-    # if st.session_state.props_view == "list":
-    #     if all_props.empty:
-    #         st.info(f"No props available yet for the next game on {next_game_date} at {next_game_time}.")
-    #     else:
-    #         st.header(f"Props for next game on {next_game_date} at {next_game_time}")
-    #         render_all_props_page(all_props)
+        st.session_state.props_event_id = event_id
+        game_date = pd.to_datetime(props_game["game_date"]).strftime("%m/%d/%Y")
+        game_time = props_game["game_status"]
 
-    elif st.session_state.props_view == "player":
-        render_player_props_page(all_props, roster_df,
-            st.session_state.selected_prop_player_id,
-            st.session_state.selected_prop_market,
-            st.session_state.props_event_id
-        )
+        all_props = load_all_player_props(event_id)
+
+        if st.session_state.props_view == "list":
+            if all_props.empty:
+                st.info(f"No props available yet for the last available game on {game_date}.")
+            else:
+                if selected_season == "2025-26":
+                    st.header(f"Props for the last available game on {game_date}")
+                else:
+                    st.header(f"Props for the next game on {game_date} at {game_time}")
+                render_all_props_page(all_props)
+
+        elif st.session_state.props_view == "player":
+            render_player_props_page(all_props, roster_df,
+                st.session_state.selected_prop_player_id,
+                st.session_state.selected_prop_market,
+                st.session_state.props_event_id,
+                selected_season
+            )

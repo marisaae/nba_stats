@@ -56,12 +56,12 @@ def render_player_list(roster_df):
                 idx += 1
 
 
-def render_player_page(roster_df, player_id):
+def render_player_page(roster_df, player_id, season):
     player = roster_df.loc[roster_df['player_id'] == player_id].iloc[0]
     images_folder = Path("player_headshots")
     player_image = images_folder / f"{player_id}.png"
     placeholder_image = images_folder / "placeholder.png"
-    player_stats = load_player_stats(player_id, "2025-26")
+    player_stats = load_player_stats(player_id, season)
 
     st.button("← Back", on_click=go_back_to_stats_list)
 
@@ -160,21 +160,25 @@ def render_player_page(roster_df, player_id):
     st.subheader(":violet[Points Performance]", divider="yellow")
 
     pts_chart = render_pts_chart(player_stats, player_id)
-    st.plotly_chart(pts_chart, width='stretch')
+    if pts_chart is not None:
+        st.plotly_chart(pts_chart, width='stretch')
 
     pts_trend_chart = render_pts_trend_chart(player_stats, player_id)
-    st.plotly_chart(pts_trend_chart, width='content')
+    if pts_trend_chart is not None:
+        st.plotly_chart(pts_trend_chart, width='content')
 
     st.markdown('<a class="nav-link" href="#home">Back to Top</a>', unsafe_allow_html=True)
 
     st.subheader(":violet[Shooting Performance]", divider="yellow")
     shooting_trends = render_shooting_trend_chart(player_stats, player_id)
-    st.plotly_chart(shooting_trends, width='stretch')
+    if shooting_trends is not None:
+        st.plotly_chart(shooting_trends, width='stretch')
 
     st.markdown('<a class="nav-link" href="#home">Back to Top</a>', unsafe_allow_html=True)
 
     st.subheader(":violet[Playmaking]", divider="yellow")
     playmaking_chart = render_playmaking_chart(player_stats, player_id)
-    st.plotly_chart(playmaking_chart, width='stretch')
-    
+    if playmaking_chart is not None:
+        st.plotly_chart(playmaking_chart, width='stretch')
+
     st.markdown('<a class="nav-link" href="#home">Back to Top</a>', unsafe_allow_html=True)

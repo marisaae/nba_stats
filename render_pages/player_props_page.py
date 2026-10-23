@@ -24,10 +24,13 @@ def go_back_to_props_list():
 def get_rolling_avg_market(market, player_row):
     col_name = MARKET_TO_ROLLING_COL.get(market)
 
-    if col_name is None or col_name not in player_row.columns:
+    if col_name is None or player_row.empty or col_name not in player_row.columns:
         return None
 
     value = player_row.iloc[0][col_name]
+
+    if pd.isna(value):
+        return None
 
     return value
 
@@ -190,7 +193,7 @@ def render_all_props_page(all_props_df):
     st.markdown('<a class="nav-link" href="#home">Back to Top</a>', unsafe_allow_html=True)
 
 
-def render_player_props_page(all_props_df, roster_df, player_id, prop_market, event_id):
+def render_player_props_page(all_props_df, roster_df, player_id, prop_market, event_id, season):
     st.button(
     "← Back",
     key=f"back_props_{st.session_state.selected_prop_player_id}_{st.session_state.selected_prop_market}",
@@ -200,6 +203,9 @@ def render_player_props_page(all_props_df, roster_df, player_id, prop_market, ev
     player_props = all_props_df[(all_props_df["player_id"]==player_id) & (all_props_df["market"] == prop_market) & (all_props_df["event_id"]== event_id)]
 
     player_props = consolidate_props(player_props)
+    if player_props.empty:
+        st.info("No props available for this player in the selected season.")
+        return
     game_date = pd.to_datetime(player_props["game_date"].iloc[0]).strftime("%m/%d/%Y")
     game_time = player_props["game_status"].iloc[0]
     market = format_prop_market(prop_market)
@@ -236,7 +242,7 @@ def render_player_props_page(all_props_df, roster_df, player_id, prop_market, ev
         
     with col4:
         line = player_props["point"].iloc[0]
-        prediction = load_player_prediction(player_id, market)
+        prediction = load_player_prediction(player_id, market, season)
         st.markdown('<div style="text-align: center; font-weight: bold; font-size: 16px; background-color: yellow; color: black;">Prediction</div>', unsafe_allow_html=True)
         st.markdown(f'''
                     <div style="text-align: center;">
@@ -245,11 +251,18 @@ def render_player_props_page(all_props_df, roster_df, player_id, prop_market, ev
 
     with col5:
         last_5_avg = get_rolling_avg_market(market, player_rolling_stats_row)
-        st.markdown(f'<div style="text-align: center; font-weight: bold; font-size: 16px; background-color: purple; color: white;">Last 5 Avg.</div>', unsafe_allow_html=True)
-        st.markdown(f'''
-                    <div style="text-align: center;">
-                    <span style="font-weight: bold; font-size: 40px;">{last_5_avg}</span> {market}</div>
-                    ''', unsafe_allow_html=True)
+        if last_5_avg is None:
+            st.markdown('<div style="text-align: center; font-weight: bold; font-size: 16px; background-color: purple; color: white;">Last 5 Avg.</div>', unsafe_allow_html=True)
+            st.markdown(f'''
+                        <div style="text-align: center;">
+                        <span style="font-weight: bold; font-size: 40px;">N/A</span> {market}</div>
+                        ''', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div style="text-align: center; font-weight: bold; font-size: 16px; background-color: purple; color: white;">Last 5 Avg.</div>', unsafe_allow_html=True)
+            st.markdown(f'''
+                        <div style="text-align: center;">
+                        <span style="font-weight: bold; font-size: 40px;">{last_5_avg}</span> {market}</div>
+                        ''', unsafe_allow_html=True)
 
     with col6:
         over = player_props["Over"].iloc[0]
@@ -262,8 +275,11 @@ def render_player_props_page(all_props_df, roster_df, player_id, prop_market, ev
         st.markdown(f'<div style="text-align: center; font-weight: bold; font-size: 40px;">{under}</div>', unsafe_allow_html=True)
 
 
-    prop_chart = render_prop_chart(player_id, line, market, prediction)
-    st.plotly_chart(prop_chart, width="content")
+    prop_chart = render_prop_chart(player_id, line, market, prediction, season)
+    if prop_chart is not None:
+        st.plotly_chart(prop_chart, width="content")
+    else:
+        st.info("No past stats available for this player.")
     
     render_more_props(st.session_state.selected_prop_player_id, all_props_df)
     st.markdown('<a class="nav-link" href="#top">Back to Top</a>', unsafe_allow_html=True)
