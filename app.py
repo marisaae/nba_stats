@@ -92,7 +92,7 @@ with col1:
     st.image(img_path, width=200)
 
 with col2:
-    st.header({selected_team}, anchor="home")
+    st.header(selected_team, anchor="home")
     st.write(f"{conference} Conference Standing: **{standing}**")
     st.write(f"Record: **{record}**")
 
