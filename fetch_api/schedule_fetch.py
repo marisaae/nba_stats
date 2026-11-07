@@ -1,4 +1,6 @@
 from datetime import date
+from curl_cffi import requests as cr
+from nba_api.stats.library.http import NBAStatsHTTP
 import os
 import time
 import random
@@ -9,6 +11,11 @@ from utils.fetch_utils import cleanup_old_headshots
 
 
 def run_all(season="2026-27"):
+    session = cr.Session(impersonate="chrome120")
+    session.get("https://www.nba.com/stats/", timeout=20)
+
+    NBAStatsHTTP.get_session = lambda self: session
+    
     today = date.today()
     all_teams = fetch_all_teams()
 
@@ -19,7 +26,7 @@ def run_all(season="2026-27"):
         with conn.cursor() as cur:
             for _, row in all_teams.iterrows():
                 team_id = row['id']
-                fetch_team_info(team_id, cur)
+                fetch_team_info(team_id, season, cur)
                 time.sleep(random.uniform(0.8, 1.5))
             roster_df = fetch_team_roster(lal_team_id, season, cur)
             fetch_team_schedule(lal_team_id, season, cur)

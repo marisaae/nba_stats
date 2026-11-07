@@ -45,6 +45,11 @@ def fetch_odds(roster_df):
             game_date = parser.parse(event['commence_time']).astimezone(est).date()
             home_team = event['home_team'].split(" ")[-1]
             away_team = event['away_team'].split(" ")[-1]
+            if event['home_team'] == "Portland Trail Blazers":
+                home_team = "Trail Blazers"
+
+            if event['away_team'] == "Portland Trail Blazers":
+                away_team = "Trail Blazers"
 
             # fetch overall odds data for game
             event_odds_path = f"/v4/sports/{sport}/events/{event_id}/odds?apiKey={api_key}&regions={region}&markets={game_markets}&oddsFormat={odds_format}&bookmakers={bookmakers}"
@@ -117,15 +122,22 @@ def fetch_odds(roster_df):
 
             with get_connection() as conn:
                 with conn.cursor() as cur:
+
                     cur.execute("""
                         UPDATE schedule
                         SET event_id = %s
                         WHERE game_date = %s
                         AND home_team_name = %s
-                        AND away_team_name = %s;
+                        AND away_team_name = %s
+                        RETURNING game_date, home_team_name, away_team_name, event_id;
                     """, (event_id, game_date, home_team, away_team))
 
-                    print(f"Event {event_id} inserted into schedule.")
+                    updated_rows = cur.fetchall()
+
+                    if updated_rows:
+                        print(f"SUCCESS: Updated {len(updated_rows)} schedule row(s): {updated_rows}")
+                    else:
+                        print("WARNING: No schedule rows matched the event data!")
 
                     game_odds_query = """
                         INSERT INTO game_odds_raw (event_id, bookmaker, market, outcome_name, price, point, last_odds_update)

@@ -63,10 +63,6 @@ lal_team_abbrev = "LAL"
 lal_team_id = all_teams.loc[all_teams['abbreviation'] == lal_team_abbrev, 'id'].iloc[0]
 st.set_page_config(page_title="NBA Data", layout="wide")
 
-team_df = load_team_info(lal_team_id)
-
-standing = team_df["standing"].iloc[0].astype(str)
-record = team_df["record"].iloc[0]
 
 col1, col2 = st.columns([.5, 3])
 with col1:
@@ -77,6 +73,11 @@ with col1:
         key="selected_season"
     )
     roster_season = selected_season[:4]
+
+team_df = load_team_info(lal_team_id, selected_season)
+
+standing = team_df["standing"].iloc[0].astype(str)
+record = team_df["record"].iloc[0]
 
 col1, col2 = st.columns([.5, 3])
 with col1:

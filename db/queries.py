@@ -7,10 +7,11 @@ load_dotenv()
 dsn = os.getenv("SQLALCHEMY_URL")
 engine = create_engine(dsn)
 
-def get_team_info(team_id):
+def get_team_info(team_id, season):
     query = """
     SELECT  team_name,
             abbreviation,
+            season,
             location,
             conference,
             record,
@@ -18,9 +19,9 @@ def get_team_info(team_id):
             total_loss,
             standing
         FROM team_info
-        WHERE id = %s;
+        WHERE id = %s AND season = %s;
     """
-    return pd.read_sql(query, engine, params=(team_id,))
+    return pd.read_sql(query, engine, params=(team_id,season))
 
 def get_team_schedule(team_id, season):
     query = """

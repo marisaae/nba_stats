@@ -32,8 +32,8 @@ def fetch_player_headshot(player_id):
         print(f"No photo available for player ID: {player_id}")
 
 # Fetch team info
-def fetch_team_info(team_id, cur):
-    team_info = teaminfocommon.TeamInfoCommon(team_id=team_id, timeout=60)
+def fetch_team_info(team_id, season, cur):
+    team_info = teaminfocommon.TeamInfoCommon(team_id=team_id, season_nullable=season, timeout=60)
     team_df = team_info.get_data_frames()[0]
 
     if team_df.empty:
@@ -41,7 +41,7 @@ def fetch_team_info(team_id, cur):
         return
 
     team_name = team_df.loc[0, 'TEAM_NAME']
-    team_curr_season = team_df.loc[0, 'SEASON_YEAR']
+
     team_abbreviation = team_df.loc[0, 'TEAM_ABBREVIATION']
     team_city = team_df.loc[0, 'TEAM_CITY']
     team_conference = team_df.loc[0, 'TEAM_CONFERENCE']
@@ -52,17 +52,16 @@ def fetch_team_info(team_id, cur):
 
     query = """
         INSERT INTO team_info
-        (id, curr_season, team_name, abbreviation, location, conference, record, total_win, total_loss, standing)
+        (id, season, team_name, abbreviation, location, conference, record, total_win, total_loss, standing)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        ON CONFLICT (id) DO UPDATE SET
-            curr_season = EXCLUDED.curr_season,
+        ON CONFLICT (id, season) DO UPDATE SET
             record = EXCLUDED.record,
             total_win = EXCLUDED.total_win,
             total_loss = EXCLUDED.total_loss,
             standing = EXCLUDED.standing,
             last_updated = NOW();
     """
-    cur.execute(query, (team_id, team_curr_season, team_name, team_abbreviation, team_city, team_conference, team_record, team_wins, team_losses, team_conf_rank))
+    cur.execute(query, (team_id, season, team_name, team_abbreviation, team_city, team_conference, team_record, team_wins, team_losses, team_conf_rank))
 
  # Fetch team roster
 def fetch_team_roster(team_id, season, cur):
@@ -84,7 +83,7 @@ def fetch_team_roster(team_id, season, cur):
             raw_height = row['HEIGHT']
             feet, inches = raw_height.split("-")
             height = f"{feet}'{inches}\""
-            weight = row['WEIGHT'] + " lbs"
+            weight = row['WEIGHT'] + " lbs" if pd.notna(row['WEIGHT']) else None
             season = row['SEASON']
             rows_to_insert.append((team_id, player_id, full_name, first_name, last_name, age, number, position, height, weight, season))
     else:
