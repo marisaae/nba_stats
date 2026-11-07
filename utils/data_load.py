@@ -25,8 +25,8 @@ def load_last_player_stats(player_id, curr_season):
     return df
 
 
-def load_team_info(team_id):
-    df = get_team_info(team_id)
+def load_team_info(team_id, season):
+    df = get_team_info(team_id, season)
     return df
 
 
