@@ -1,15 +1,37 @@
 from nba_api.stats.static import teams
-from nba_api.stats.endpoints import teaminfocommon, commonteamroster, scheduleleaguev2, playergamelog, leaguedashteamstats
+from nba_api.stats.endpoints import teaminfocommon, leaguestandingsv3, commonteamroster, scheduleleaguev2, playergamelog, leaguedashteamstats
 from nba_headshot_downloader import headshots
 import pandas as pd
 import time
 import random
 import os
 
-def fetch_all_teams():
+# Fetch all NBA teams and store in database - run once
+def fetch_all_teams(cur):
     nba_teams = teams.get_teams()
     teams_df = pd.DataFrame(nba_teams)
-    return teams_df
+    rows_to_insert = []
+
+    if not teams_df.empty:
+        for _, row in teams_df.iterrows():
+            team_id = row['id']
+            team_name = row['full_name']
+            team_abbrev = row['abbreviation']
+            team_nickname = row['nickname']
+            team_city = row['city']
+            team_state = row['state']
+            rows_to_insert.append((team_id, team_name, team_abbrev, team_nickname, team_city, team_state))
+    else:
+        print("No team data found.")
+
+    query = """
+        INSERT INTO all_team_info
+        (id, full_name, abbrev, nickname, city, state)
+        VALUES (%s,%s,%s,%s,%s,%s)
+        ON CONFLICT (id) DO UPDATE SET
+            last_updated = NOW();
+        """
+    cur.executemany(query, rows_to_insert)
 
 # Fetch team ID by team name
 # def fetch_team_id(team_name):
@@ -33,27 +55,35 @@ def fetch_player_headshot(player_id):
 
 # Fetch team info
 def fetch_team_info(team_id, season, cur):
-    team_info = teaminfocommon.TeamInfoCommon(team_id=team_id, season_nullable=season, timeout=60)
+    # team_info = teaminfocommon.TeamInfoCommon(team_id=team_id, season_nullable=season, timeout=60)
+    team_info = leaguestandingsv3.LeagueStandingsV3(season=season, season_type="Regular Season", timeout=60)
     team_df = team_info.get_data_frames()[0]
 
     if team_df.empty:
         print("No team data found.")
         return
 
-    team_name = team_df.loc[0, 'TEAM_NAME']
+    team_row = team_df[team_df['TeamID'] == team_id]
 
-    team_abbreviation = team_df.loc[0, 'TEAM_ABBREVIATION']
-    team_city = team_df.loc[0, 'TEAM_CITY']
-    team_conference = team_df.loc[0, 'TEAM_CONFERENCE']
-    team_record = f"{team_df.loc[0, 'W']}-{team_df.loc[0, 'L']}"
-    team_wins = team_df.loc[0, 'W']
-    team_losses = team_df.loc[0, 'L']
-    team_conf_rank = team_df.loc[0, 'CONF_RANK']
+    if team_row.empty:
+        print(f"No standings data found for team ID {team_id}")
+        return
+
+    team_row = team_row.iloc[0]
+
+    team_name = team_row['TeamName']
+    team_season = season
+    team_city = team_row['TeamCity']
+    team_conference = team_row['Conference']
+    team_record = f"{team_row['WINS']}-{team_row['LOSSES']}"
+    team_wins = team_row['WINS']
+    team_losses = team_row['LOSSES']
+    team_conf_rank = team_row['PlayoffRank']
 
     query = """
         INSERT INTO team_info
-        (id, season, team_name, abbreviation, location, conference, record, total_win, total_loss, standing)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        (id, season, team_name, location, conference, record, total_win, total_loss, standing)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
         ON CONFLICT (id, season) DO UPDATE SET
             record = EXCLUDED.record,
             total_win = EXCLUDED.total_win,
@@ -61,7 +91,7 @@ def fetch_team_info(team_id, season, cur):
             standing = EXCLUDED.standing,
             last_updated = NOW();
     """
-    cur.execute(query, (team_id, season, team_name, team_abbreviation, team_city, team_conference, team_record, team_wins, team_losses, team_conf_rank))
+    cur.execute(query, (team_id, team_season, team_name, team_city, team_conference, team_record, team_wins, team_losses, team_conf_rank))
 
  # Fetch team roster
 def fetch_team_roster(team_id, season, cur):

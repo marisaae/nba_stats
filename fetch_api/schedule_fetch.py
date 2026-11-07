@@ -5,22 +5,24 @@ import os
 import time
 import random
 from db.connection import get_connection
-from fetch_api.nba_fetch import (fetch_all_teams, fetch_team_info, fetch_team_roster, fetch_team_schedule, fetch_player_game_logs, fetch_team_def_stats, fetch_player_headshot)
+from fetch_api.nba_fetch import (fetch_team_info, fetch_team_roster, fetch_team_schedule, fetch_player_game_logs, fetch_team_def_stats, fetch_player_headshot)
 from fetch_api.odds_fetch import fetch_odds
+from utils.data_load import load_all_teams
 from utils.fetch_utils import cleanup_old_headshots
 
 
-def run_all(season="2026-27"):
+def run_all(season="2025-26"):
     session = cr.Session(impersonate="chrome120")
     session.get("https://www.nba.com/stats/", timeout=20)
 
     NBAStatsHTTP.get_session = lambda self: session
     
     today = date.today()
-    all_teams = fetch_all_teams()
 
-    lal_team_abbrev = "LAL"
-    lal_team_id = all_teams.loc[all_teams['abbreviation'] == lal_team_abbrev, 'id'].iloc[0]
+    all_teams = load_all_teams()
+
+    # lal_team_nickname = "Lakers"
+    # lal_team_id = all_teams.loc[all_teams['nickname'] == lal_team_nickname, 'id'].iloc[0]
 
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -28,40 +30,40 @@ def run_all(season="2026-27"):
                 team_id = row['id']
                 fetch_team_info(team_id, season, cur)
                 time.sleep(random.uniform(0.8, 1.5))
-            roster_df = fetch_team_roster(lal_team_id, season, cur)
-            fetch_team_schedule(lal_team_id, season, cur)
-            fetch_team_def_stats('F', season, cur)
-            fetch_team_def_stats('C', season, cur)
-            fetch_team_def_stats('G', season, cur)
-            for _, row in roster_df.iterrows():
-                fetch_player_game_logs(row['PLAYER_ID'], season, cur)
+    #         roster_df = fetch_team_roster(lal_team_id, season, cur)
+    #         fetch_team_schedule(lal_team_id, season, cur)
+    #         fetch_team_def_stats('F', season, cur)
+    #         fetch_team_def_stats('C', season, cur)
+    #         fetch_team_def_stats('G', season, cur)
+    #         for _, row in roster_df.iterrows():
+    #             fetch_player_game_logs(row['PLAYER_ID'], season, cur)
 
-    for _, row in roster_df.iterrows():
-        player_id = row["PLAYER_ID"]
-        filename = f"{player_id}.png"
-        filepath = os.path.join("player_headshots", filename)
+    # for _, row in roster_df.iterrows():
+    #     player_id = row["PLAYER_ID"]
+    #     filename = f"{player_id}.png"
+    #     filepath = os.path.join("player_headshots", filename)
 
-        if os.path.exists(filepath):
-            continue
+    #     if os.path.exists(filepath):
+    #         continue
 
-        fetch_player_headshot(player_id)
+    #     fetch_player_headshot(player_id)
     
-    # current_player_ids = roster_df['PLAYER_ID'].tolist()
-    # cleanup_old_headshots(current_player_ids)
+    # # current_player_ids = roster_df['PLAYER_ID'].tolist()
+    # # cleanup_old_headshots(current_player_ids)
 
-    fetch_odds(roster_df)
+    # fetch_odds(roster_df)
 
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            print("Refreshing materialized views...")
-            cur.execute("REFRESH MATERIALIZED VIEW rolling_stats;")
-            cur.execute("REFRESH MATERIALIZED VIEW game_odds_pivot;")
-            cur.execute("REFRESH MATERIALIZED VIEW player_odds_pivot;")
-            cur.execute("REFRESH MATERIALIZED VIEW model_player_stats;")
-            cur.execute("REFRESH MATERIALIZED VIEW front_end_props;")
-            cur.execute("REFRESH MATERIALIZED VIEW future_games;")
+    # with get_connection() as conn:
+    #     with conn.cursor() as cur:
+    #         print("Refreshing materialized views...")
+    #         cur.execute("REFRESH MATERIALIZED VIEW rolling_stats;")
+    #         cur.execute("REFRESH MATERIALIZED VIEW game_odds_pivot;")
+    #         cur.execute("REFRESH MATERIALIZED VIEW player_odds_pivot;")
+    #         cur.execute("REFRESH MATERIALIZED VIEW model_player_stats;")
+    #         cur.execute("REFRESH MATERIALIZED VIEW front_end_props;")
+    #         cur.execute("REFRESH MATERIALIZED VIEW future_games;")
 
-            print("Materialized views updated.")
+    #         print("Materialized views updated.")
 
     print("date: ", today)
 if __name__ == "__main__":

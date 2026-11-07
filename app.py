@@ -4,7 +4,7 @@ from fetch_api.nba_fetch import fetch_all_teams
 from render_pages.player_stats_page import render_player_list, render_player_page
 from render_pages.player_props_page import render_all_props_page, render_player_props_page
 from utils.data_format import format_schedule, highlight_lakers_score, highlight_preseason
-from utils.data_load import load_team_schedule, load_team_roster, load_team_info, load_all_player_props
+from utils.data_load import load_all_teams, load_team_schedule, load_team_roster, load_team_info, load_all_player_props
 from db.queries import get_next_game
 from pathlib import Path
 from datetime import date
@@ -57,12 +57,12 @@ if "selected_prop_market" not in st.session_state:
 if "props_event_id" not in st.session_state:
     st.session_state.props_event_id = None
 
-all_teams = fetch_all_teams()
-
-lal_team_abbrev = "LAL"
-lal_team_id = all_teams.loc[all_teams['abbreviation'] == lal_team_abbrev, 'id'].iloc[0]
 st.set_page_config(page_title="NBA Data", layout="wide")
 
+all_teams = load_all_teams()
+
+lal_team_nickname = "Lakers"
+lal_team_id = all_teams.loc[all_teams['nickname'] == lal_team_nickname, 'id'].iloc[0]
 
 col1, col2 = st.columns([.5, 3])
 with col1:

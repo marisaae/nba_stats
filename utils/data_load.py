@@ -1,4 +1,4 @@
-from db.queries import get_team_info, get_team_schedule, get_team_roster, get_player_stats, get_all_player_props, get_player_props, get_rolling_avg_stats, get_player_next_predictions, get_player_last_predictions, get_player_last_stats
+from db.queries import get_all_teams, get_team_info, get_team_schedule, get_team_roster, get_player_stats, get_all_player_props, get_player_props, get_rolling_avg_stats, get_player_next_predictions, get_player_last_predictions, get_player_last_stats
 from utils.data_format import format_predictions
 from utils.market_mappings import MARKET_TO_PRED_COL
 import pandas as pd
@@ -29,6 +29,9 @@ def load_team_info(team_id, season):
     df = get_team_info(team_id, season)
     return df
 
+def load_all_teams():
+    df = get_all_teams()
+    return df
 
 def load_player_props(player_id, event_id, prop_market):
     df = get_player_props(player_id, event_id, prop_market)
