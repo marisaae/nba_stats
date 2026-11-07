@@ -61,11 +61,15 @@ st.set_page_config(page_title="NBA Data", layout="wide")
 
 all_teams = load_all_teams()
 
-lal_team_nickname = "Lakers"
-lal_team_id = all_teams.loc[all_teams['nickname'] == lal_team_nickname, 'id'].iloc[0]
-
-col1, col2 = st.columns([.5, 3])
+col1, col2 = st.columns([.5, .5])
 with col1:
+    selected_team = st.selectbox(
+        "Select Team",
+        ["Los Angeles Lakers"],
+        key="selected_team"
+    )
+
+with col2:
 
     selected_season = st.selectbox(
         "Select Season",
@@ -74,10 +78,13 @@ with col1:
     )
     roster_season = selected_season[:4]
 
-team_df = load_team_info(lal_team_id, selected_season)
+selected_team_id = all_teams.loc[all_teams['full_name'] == selected_team, 'id'].iloc[0]
+selected_team_nickname = all_teams.loc[all_teams['full_name'] == selected_team, 'nickname'].iloc[0]
+selected_team_df = load_team_info(selected_team_id, selected_season)
 
-standing = team_df["standing"].iloc[0].astype(str)
-record = team_df["record"].iloc[0]
+conference = selected_team_df["conference"].iloc[0]
+standing = selected_team_df["standing"].iloc[0].astype(str)
+record = selected_team_df["record"].iloc[0]
 
 col1, col2 = st.columns([.5, 3])
 with col1:
@@ -85,16 +92,16 @@ with col1:
     st.image(img_path, width=200)
 
 with col2:
-    st.header("Los Angeles Lakers", anchor="home")
-    st.write(f"Western Conference Standing: **{standing}**")
+    st.header({selected_team}, anchor="home")
+    st.write(f"{conference} Conference Standing: **{standing}**")
     st.write(f"Record: **{record}**")
 
 
-schedule_df = load_team_schedule(lal_team_id, selected_season)
-schedule_df = format_schedule(schedule_df, lal_team_id, "Lakers")
+schedule_df = load_team_schedule(selected_team_id, selected_season)
+schedule_df = format_schedule(schedule_df, selected_team_id, selected_team_nickname)
 styled_schedule_df = schedule_df.style.apply(highlight_lakers_score, axis=1).apply(highlight_preseason, axis=1)
 
-roster_df = load_team_roster(lal_team_id, roster_season)
+roster_df = load_team_roster(selected_team_id, roster_season)
 
 
 t1, t2, t3, t4 = st.tabs(["Schedule", "Roster", "Player Stats", "Player Props"])
@@ -159,7 +166,7 @@ with t4:
         }
 
     else:
-        props_game = get_next_game(lal_team_id, selected_season)
+        props_game = get_next_game(selected_team_id, selected_season)
 
     if props_game is None:
         st.info("No upcoming games scheduled.")
