@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from curl_cffi import requests as cr
 from nba_api.stats.library.http import NBAStatsHTTP
 import os
@@ -11,13 +11,14 @@ from utils.data_load import load_all_teams
 from utils.fetch_utils import cleanup_old_headshots
 
 
-def run_all(season="2025-26"):
+def run_all(season="2026-27"):
     session = cr.Session(impersonate="chrome120")
     session.get("https://www.nba.com/stats/", timeout=20)
 
     NBAStatsHTTP.get_session = lambda self: session
     
     today = date.today()
+    current_time = datetime.now().strftime("%H:%M:%S")
 
     all_teams = load_all_teams()
 
@@ -66,5 +67,6 @@ def run_all(season="2025-26"):
             print("Materialized views updated.")
 
     print("date: ", today)
+    print("time: ", current_time)
 if __name__ == "__main__":
     run_all()

@@ -55,7 +55,6 @@ def fetch_player_headshot(player_id):
 
 # Fetch team info
 def fetch_team_info(team_id, season, cur):
-    # team_info = teaminfocommon.TeamInfoCommon(team_id=team_id, season_nullable=season, timeout=60)
     team_info = leaguestandingsv3.LeagueStandingsV3(season=season, season_type="Regular Season", timeout=60)
     team_df = team_info.get_data_frames()[0]
 

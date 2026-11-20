@@ -1,5 +1,5 @@
 from predictions.predict_models import predict_next_game, log_prediction, STAT_CONFIGS
-from datetime import date
+from datetime import date, datetime
 import os
 from sqlalchemy import create_engine
 import pandas as pd
@@ -12,6 +12,7 @@ def run_predictions():
     dsn = os.getenv("SQLALCHEMY_URL")
     engine = create_engine(dsn)
     today = date.today()
+    current_time = datetime.now().strftime("%H:%M:%S")
 
     query = "SELECT * FROM future_games;"
 
@@ -24,6 +25,7 @@ def run_predictions():
             log_prediction(prediction_df, cur)
     
     print("date: ", today)
+    print("time: ", current_time)
 
 if __name__ == "__main__":
     run_predictions()

@@ -183,7 +183,7 @@ with t4:
 
         if st.session_state.props_view == "list":
             if all_props.empty:
-                st.info(f"No props available yet for the last available game on {game_date}.")
+                st.info(f"No props available yet for the next available game on {game_date}.")
             else:
                 if selected_season == "2025-26":
                     st.header(f"Props for the last available game on {game_date}")
